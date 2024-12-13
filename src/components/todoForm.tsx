@@ -4,7 +4,8 @@ import type { FormProps } from 'antd';
 import { Button, Modal, DatePicker, Form, Input, Radio, message } from 'antd';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useMediaQuery } from 'react-responsive';
 
 dayjs.extend(customParseFormat);
 
@@ -37,9 +38,21 @@ function TodoForm({
   const [form] = Form.useForm<TodoType>();
   const [loading, setLoading] = useState(false);
 
-  const showModal = () => {
-    setOpen(true);
-  };
+  // Use media query to detect mobile devices
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+
+  // Reset form when todo changes
+  useEffect(() => {
+    if (todo) {
+      form.setFieldsValue({
+        title: todo.title,
+        priority: todo.priority,
+        dueDate: dayjs(todo.dueDate),
+      });
+    } else {
+      form.resetFields();
+    }
+  }, [todo, form]);
 
   const onFinish: FormProps<TodoType>['onFinish'] = async (values) => {
     try {
@@ -69,44 +82,47 @@ function TodoForm({
 
   const onFinishFailed: FormProps<TodoType>['onFinishFailed'] = (errorInfo) => {
     console.log('Failed:', errorInfo);
-
     message.error('Please fill in all required fields');
   };
 
   const handleCancel = () => {
     setOpen(false);
     form.resetFields();
+    setEditTodo(null);
   };
-
-  if (todo) {
-    form.setFieldsValue({
-      title: todo.title,
-      priority: todo.priority,
-      dueDate: dayjs(todo.dueDate),
-    });
-  }
 
   return (
     <>
       <button
-        onClick={showModal}
-        className="text-7xl shadow-2xl w-fit py-2 px-6 bg-gradient-to-br from-primary via-secondary to-accent text-background rounded-2xl fixed bottom-8 right-8"
+        onClick={() => setOpen(true)}
+        className={`
+          shadow-2xl w-fit py-2 px-6 
+          bg-gradient-to-br from-primary via-secondary to-accent 
+          text-background rounded-2xl 
+          fixed bottom-8 right-8
+          ${isMobile ? 'text-4xl' : 'text-7xl'}
+          transition-all duration-300 ease-in-out
+          hover:scale-105 active:scale-95
+        `}
       >
         +
       </button>
       <Modal
-        title="Add Todo"
+        title={todo ? 'Edit Todo' : 'Add Todo'}
         open={open}
         onCancel={handleCancel}
-        footer={null} // Remove default footer to use form's submit button
+        footer={null}
         confirmLoading={loading}
+        width={isMobile ? '95%' : 600}
+        centered
       >
         <Form
-          form={form} // Pass form instance
+          form={form}
           name="todoForm"
-          labelCol={{ span: 8 }}
-          wrapperCol={{ span: 16 }}
-          style={{ maxWidth: 600 }}
+          layout={isMobile ? 'vertical' : 'horizontal'}
+          labelCol={isMobile ? undefined : { span: 8 }}
+          wrapperCol={isMobile ? undefined : { span: 16 }}
+          style={{ maxWidth: '100%' }}
           initialValues={{ remember: true }}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
@@ -117,7 +133,7 @@ function TodoForm({
             name="title"
             rules={[{ required: true, message: 'Please add a todo title' }]}
           >
-            <Input />
+            <Input placeholder="Enter todo title" />
           </Form.Item>
 
           <Form.Item<TodoType>
@@ -128,6 +144,7 @@ function TodoForm({
             <Radio.Group
               options={priority}
               optionType="button"
+              buttonStyle="solid"
             />
           </Form.Item>
 
@@ -139,13 +156,19 @@ function TodoForm({
             <DatePicker
               format={dateFormat}
               minDate={dayjs(Date.now(), dateFormat)}
+              style={{ width: '100%' }}
+              placeholder="Select due date"
             />
           </Form.Item>
 
-          <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
+          <Form.Item
+            wrapperCol={isMobile ? { span: 24 } : { offset: 8, span: 16 }}
+          >
             <Button
               type="primary"
               htmlType="submit"
+              loading={loading}
+              block={isMobile}
             >
               {todo ? 'Update' : 'Add'}
             </Button>

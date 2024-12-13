@@ -49,7 +49,6 @@ export default function Home() {
 
   useEffect(() => {
     fetchTodos().then((data) => {
-      console.log(data);
       setTodos(data);
     });
   }, []);
@@ -57,7 +56,7 @@ export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center">
       <main className="max-w-screen-xl w-full h-full flex flex-col gap-8 p-8">
-        <h1 className="text-8xl font-bold text-center bg-gradient-to-br w-fit m-auto text-transparent bg-clip-text from-primary via-secondary to-accent">
+        <h1 className="text-5xl md:text-8xl font-bold text-center bg-gradient-to-br w-fit m-auto text-transparent bg-clip-text from-primary via-secondary to-accent">
           Todos
         </h1>
         <div className="bg-tertiary p-4 rounded-lg border-2 shadow-xl border-secondary">
